@@ -6,9 +6,11 @@ namespace Avarice.Data;
 
 internal class RotationSolverWatcher 
 {
+    private readonly EzIPCDisposalToken[] _ipcTokens;
+
     public RotationSolverWatcher() 
     {
-        EzIPC.Init(this);
+        _ipcTokens = EzIPC.Init(this);
     }
 
     public bool Available { get; private set; }
@@ -36,5 +38,13 @@ internal class RotationSolverWatcher
     {
         o = (ActionID) NextGCDActionId;
         return o != 0;
+    }
+
+    public void Dispose()
+    {
+        foreach (var token in _ipcTokens)
+        {
+            token.Dispose();
+        }
     }
 }

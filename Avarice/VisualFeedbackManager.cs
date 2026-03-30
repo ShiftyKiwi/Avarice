@@ -49,7 +49,7 @@ internal class VisualFeedbackOverlay : Window
     public bool IsSuccess { get; set; }
     public bool IsShowingFeedback { get; set; }
     
-    private DateTime displayEndTime;
+    private int feedbackGeneration;
     private const float DEFAULT_HEIGHT_OFFSET = 2.0f; // Fixed height above player
     
     public VisualFeedbackOverlay() : base("##VisualFeedbackOverlay",
@@ -70,11 +70,14 @@ internal class VisualFeedbackOverlay : Window
     {
         IsSuccess = success;
         IsShowingFeedback = true;
-        displayEndTime = DateTime.Now.AddSeconds(duration);
-        
+        var generation = ++feedbackGeneration;
+
         Task.Delay(TimeSpan.FromSeconds(duration)).ContinueWith(_ =>
         {
-            HideFeedback();
+            if (generation == feedbackGeneration)
+            {
+                HideFeedback();
+            }
         });
     }
     

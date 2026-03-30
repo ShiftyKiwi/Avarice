@@ -1,25 +1,25 @@
 [
-  {
-    "Author": "кайт машина (Puni.sh)",
-    "Name": "Avarice",
-    "InternalName": "Avarice",
-    "AssemblyVersion": "2.2.0.5",
-    "Description": "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
-    "ApplicableVersion": "any",
-    "RepoUrl": "https://github.com/ShiftyKiwi/Avarice",
-    "Tags": [
-      "combat"
-    ],
-    "DalamudApiLevel": 14,
-    "LoadRequiredState": 0,
-    "LoadSync": false,
-    "CanUnloadAsync": false,
-    "LoadPriority": 0,
-    "IconUrl": "https://raw.githubusercontent.com/ShiftyKiwi/Avarice/main/Assets/avarice_icon.png",
-    "Punchline": "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
-    "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.5/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.5/latest.zip",
-    "Changelog": "Fixed cone/outline overlay gating so positional indicators render consistently when Always is enabled and across duties."
-  }
+{
+    "Author":  "кайт машина (Puni.sh)",
+    "Name":  "Avarice",
+    "InternalName":  "Avarice",
+    "AssemblyVersion":  "2.2.0.6",
+    "Description":  "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
+    "ApplicableVersion":  "any",
+    "RepoUrl":  "https://github.com/ShiftyKiwi/Avarice",
+    "Tags":  [
+                 "combat"
+             ],
+    "DalamudApiLevel":  14,
+    "LoadRequiredState":  0,
+    "LoadSync":  false,
+    "CanUnloadAsync":  false,
+    "LoadPriority":  0,
+    "IconUrl":  "https://raw.githubusercontent.com/ShiftyKiwi/Avarice/main/Assets/avarice_icon.png",
+    "Punchline":  "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
+    "AcceptsFeedback":  true,
+    "DownloadLinkInstall":  "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.6/latest.zip",
+    "DownloadLinkUpdate":  "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.6/latest.zip",
+    "Changelog":  "Robustness pass: config migration/validation, safer teardown, unified target evaluation, improved debug visibility, Pictomancy fallback backoff, and release metadata automation."
+}
 ]

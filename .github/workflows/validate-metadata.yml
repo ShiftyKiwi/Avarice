@@ -1,0 +1,24 @@
+name: Validate Metadata
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  plugin-metadata:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync pluginmaster
+        shell: pwsh
+        run: ./scripts/sync-pluginmaster.ps1
+
+      - name: Verify pluginmaster is committed
+        shell: pwsh
+        run: git diff --exit-code -- pluginmaster.json

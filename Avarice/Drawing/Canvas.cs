@@ -51,21 +51,14 @@ internal unsafe class Canvas : Window
 
     private static bool ShouldDrawForTarget(IGameObject target)
     {
-        if (target is not IBattleNpc bnpc || !bnpc.IsHostile())
-            return false;
-
-        if (bnpc.HasPositional())
-            return true;
-
-        return P.currentProfile.EnableMaxMeleeRing && P.currentProfile.MaxMeleeIgnorePositionalCheck;
+        var evaluation = LuminaSheets.EvaluateTarget(target);
+        var allowRangeFallback = P.currentProfile.EnableMaxMeleeRing && P.currentProfile.MaxMeleeIgnorePositionalCheck;
+        return evaluation.AllowsAnyOverlays(P.config.OnlyDrawIfPositional, allowRangeFallback);
     }
 
     private static bool ShouldShowPositionalFeaturesForTarget(IGameObject target)
     {
-        if (target is not IBattleNpc bnpc || !bnpc.IsHostile())
-            return false;
-
-        return !P.config.OnlyDrawIfPositional || bnpc.HasPositional();
+        return LuminaSheets.EvaluateTarget(target).AllowsPositionalOverlays(P.config.OnlyDrawIfPositional);
     }
 
     private static bool ShouldDrawFocusTarget(IGameObject focusTarget, IGameObject target)
@@ -80,9 +73,9 @@ internal unsafe class Canvas : Window
             || territoryIntendedUse == ECommons.ExcelServices.TerritoryIntendedUseEnum.Housing_Instances;
     }
 
-    private void DrawMaxMeleeForTarget(IBattleNpc bnpc)
+    private void DrawMaxMeleeForTarget(IBattleNpc bnpc, TargetPositionalInfo evaluation)
     {
-        var useSimpleCircle = P.currentProfile.MaxMeleeIgnorePositionalCheck && !bnpc.HasPositional();
+        var useSimpleCircle = evaluation.UsesSimpleRangeCircle(P.currentProfile.MaxMeleeIgnorePositionalCheck);
         var pos = IsInHousingZone() ? GroundDetection.GetAutoGroundedPosition(bnpc.Position) : bnpc.Position;
 
         if (useSimpleCircle)
@@ -188,13 +181,16 @@ internal unsafe class Canvas : Window
 
         if (P.currentProfile.EnableMaxMeleeRing && IsConditionMatching(P.currentProfile.MaxMeleeSettingsN.DisplayCondition))
         {
-            if (ShouldDrawForTarget(target) && target is IBattleNpc targetBnpc)
-                DrawMaxMeleeForTarget(targetBnpc);
+            var targetEvaluation = LuminaSheets.EvaluateTarget(target);
+            if (targetEvaluation.AllowsAnyOverlays(P.config.OnlyDrawIfPositional, P.currentProfile.MaxMeleeIgnorePositionalCheck)
+              && target is IBattleNpc targetBnpc)
+                DrawMaxMeleeForTarget(targetBnpc, targetEvaluation);
 
+            var focusEvaluation = LuminaSheets.EvaluateTarget(focusTarget);
             if (ShouldDrawFocusTarget(focusTarget, target)
-              && ShouldDrawForTarget(focusTarget)
+              && focusEvaluation.AllowsAnyOverlays(P.config.OnlyDrawIfPositional, P.currentProfile.MaxMeleeIgnorePositionalCheck)
               && focusTarget is IBattleNpc focusBnpc)
-                DrawMaxMeleeForTarget(focusBnpc);
+                DrawMaxMeleeForTarget(focusBnpc, focusEvaluation);
         }
 
         if (P.currentProfile.EnablePlayerRing && IsConditionMatching(P.currentProfile.PlayerRingSettings.DisplayCondition))

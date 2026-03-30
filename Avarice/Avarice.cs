@@ -39,6 +39,7 @@ public unsafe class Avarice : IDalamudPlugin
     internal PositionalManager PositionalManager;
     internal uint[] PositionalStatus;
     internal RotationSolverWatcher RotationSolverWatcher;
+    private Action openConfigUiHandler;
 
     public Avarice(IDalamudPluginInterface pi)
     {
@@ -48,12 +49,8 @@ public unsafe class Avarice : IDalamudPlugin
         _ = new TickScheduler(delegate
         {
             PositionalStatus = EzSharedData.GetOrCreate<uint[]>("Avarice.PositionalStatus", [0, 0]);
-            config = Svc.PluginInterface.GetPluginConfig() as Config ?? new();
-            if (config.Profiles.Count == 0)
-            {
-                config.Profiles.Add(new() { Name = "Default profile", IsDefault = true });
-            }
-            currentProfile = config.Profiles.FirstOr0(x => x.IsDefault);
+            config = ConfigMigration.Migrate(Svc.PluginInterface.GetPluginConfig() as Config, out var configChanged);
+            currentProfile = config.Profiles.FirstOrDefault(x => x.IsDefault) ?? config.Profiles[0];
             //Svc.GameNetwork.NetworkMessage += OnNetworkMessage;
             RotationSolverWatcher = new();
             memory = new();
@@ -63,7 +60,8 @@ public unsafe class Avarice : IDalamudPlugin
             canvas = new();
             windowSystem.AddWindow(canvas);
             Svc.PluginInterface.UiBuilder.Draw += windowSystem.Draw;
-            Svc.PluginInterface.UiBuilder.OpenConfigUi += delegate { configWindow.IsOpen = true; };
+            openConfigUiHandler = () => configWindow.IsOpen = true;
+            Svc.PluginInterface.UiBuilder.OpenConfigUi += openConfigUiHandler;
             Svc.Condition.ConditionChange += OnConditionChange;
             _ = Svc.Commands.AddHandler("/avarice", new CommandInfo((string cmd, string args) =>
             {
@@ -98,6 +96,11 @@ public unsafe class Avarice : IDalamudPlugin
 
             PositionalManager = new();
             PictoService.Initialize(Svc.PluginInterface);
+
+            if (configChanged)
+            {
+                Safe(() => Svc.PluginInterface.SavePluginConfig(config));
+            }
         });
     }
 
@@ -205,9 +208,22 @@ public unsafe class Avarice : IDalamudPlugin
 
     public void Dispose()
     {
-        Safe(() => Svc.PluginInterface.SavePluginConfig(config));
+        Safe(() =>
+        {
+            if (config != null)
+            {
+                Svc.PluginInterface.SavePluginConfig(config);
+            }
+        });
         //Svc.GameNetwork.NetworkMessage -= OnNetworkMessage;
-        Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+        if (windowSystem != null)
+        {
+            Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+        }
+        if (openConfigUiHandler != null)
+        {
+            Svc.PluginInterface.UiBuilder.OpenConfigUi -= openConfigUiHandler;
+        }
         _ = Svc.Commands.RemoveHandler("/avarice");
         Svc.Condition.ConditionChange -= OnConditionChange;
         Svc.Framework.Update -= Tick;
@@ -215,9 +231,10 @@ public unsafe class Avarice : IDalamudPlugin
         {
             Svc.PluginInterface.GetIpcProvider<IntPtr, CardinalDirection>("Avarice.CardinalDirection").UnregisterFunc();
         });
-        memory.Dispose();
+        memory?.Dispose();
+        RotationSolverWatcher?.Dispose();
         ActionWatching.Dispose();
-        ComboCache.ComboCacheInstance.Dispose();
+        ComboCache.ComboCacheInstance?.Dispose();
         VisualFeedbackManager.Dispose();
         PictoService.Dispose();
         PunishLibMain.Dispose();

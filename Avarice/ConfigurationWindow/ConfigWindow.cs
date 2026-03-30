@@ -1,6 +1,8 @@
 ﻿using Dalamud.Interface.Components;
 using ECommons.MathHelpers;
 
+using Dalamud.Game.ClientState.Objects.Types;
+
 namespace Avarice.ConfigurationWindow;
 
 internal unsafe partial class ConfigWindow : Window
@@ -36,6 +38,19 @@ internal unsafe partial class ConfigWindow : Window
 
     private void Debug()
     {
+        static void DrawTargetInfo(string label, IGameObject target)
+        {
+            var evaluation = LuminaSheets.EvaluateTarget(target);
+            ImGuiEx.Text($"{label}: {evaluation.Reason}");
+
+            if (target is IBattleNpc bnpc)
+            {
+                ImGuiEx.Text($"  ObjectId={bnpc.GameObjectId} BaseId={bnpc.BaseId} Hostile={evaluation.IsHostile} EnemyKind={evaluation.IsEnemyKind}");
+                ImGuiEx.Text($"  Omnidirectional={evaluation.DataMarksOmnidirectional} Status3808={evaluation.HasNonPositionalStatus} Ignored={evaluation.NonPositionalStatusIgnored}");
+                ImGuiEx.Text($"  EffectivePositionals={evaluation.EffectiveHasPositionals}");
+            }
+        }
+
         if(ImGui.CollapsingHeader("StaticAutoDetectRadiusData"))
         {
             ImGuiEx.Text(P.StaticAutoDetectRadiusData.Select(x => x.ToString()).Join("\n"));
@@ -75,6 +90,13 @@ internal unsafe partial class ConfigWindow : Window
             ImGuiEx.Text(ImGuiColors.DalamudRed, FontAwesomeIcon.Heart.ToIconString());
             ImGui.PopFont();
             ImGuiEx.Text($"Is target positional: {Svc.Targets.Target?.HasPositional()}");
+            DrawTargetInfo("Target eval", Svc.Targets.Target);
+            DrawTargetInfo("Focus eval", Svc.Targets.FocusTarget);
+            ImGuiEx.Text($"Pictomancy drawing={PictomancyRenderer.IsDrawing} backoff={PictomancyRenderer.InFailureBackoff} failures={PictomancyRenderer.ConsecutiveFailures}");
+            if (PictomancyRenderer.InFailureBackoff)
+            {
+                ImGuiEx.Text($"Pictomancy fallback remaining: {PictomancyRenderer.FailureBackoffRemaining.TotalSeconds:0.0}s");
+            }
             if(ImGui.Button("Test IPC"))
             {
                 Safe(TestIPC);

@@ -3,6 +3,7 @@ using Lumina.Excel.Sheets;
 using System.Collections.Generic;
 using System.Linq;
 using ECommons.DalamudServices;
+using ECommons.GameFunctions;
 using System.Reflection;
 
 namespace Avarice
@@ -49,29 +50,45 @@ namespace Avarice
             }
         }
 
+        internal static TargetPositionalInfo EvaluateTarget(IGameObject obj)
+        {
+            if (obj is not IBattleNpc bnpc)
+                return TargetPositionalInfo.None;
+
+            var isHostile = bnpc.IsHostile();
+            var isEnemyKind = bnpc.BattleNpcKind == Dalamud.Game.ClientState.Objects.Enums.BattleNpcSubKind.Enemy;
+            var hasNonPositionalStatus = bnpc.StatusList.Any(x => x.StatusId == 3808);
+            var ignoreStatus = hasNonPositionalStatus && P.currentProfile.ShowPositionalWithoutCheckWhenNonPositionalBuffs;
+            var dataMarksOmnidirectional = IsOmnidirectional(bnpc.BaseId);
+            var effectiveHasPositionals = isHostile
+                && isEnemyKind
+                && !dataMarksOmnidirectional
+                && (!hasNonPositionalStatus || ignoreStatus);
+
+            return new TargetPositionalInfo(
+                isBattleNpc: true,
+                isHostile: isHostile,
+                isEnemyKind: isEnemyKind,
+                dataMarksOmnidirectional: dataMarksOmnidirectional,
+                hasNonPositionalStatus: hasNonPositionalStatus,
+                nonPositionalStatusIgnored: ignoreStatus,
+                effectiveHasPositionals: effectiveHasPositionals
+            );
+        }
+
         public static bool HasPositional(this IGameObject obj)
         {
-            // If the "Only show for positional targets" configuration is disabled,
-            // ignore BNpcBase filtering and treat all targets as positional.
-            if (!P.config.OnlyDrawIfPositional)
-                return true;
+            return EvaluateTarget(obj).EffectiveHasPositionals;
+        }
 
-            if (obj is not IBattleNpc bnpc)
-                return false;
-            
-            if (bnpc.StatusList.Any(x => x.StatusId == 3808) && !P.currentProfile.ShowPositionalWithoutCheckWhenNonPositionalBuffs)
-                return false;
-
-            uint dataId = bnpc.BaseId;
+        private static bool IsOmnidirectional(uint dataId)
+        {
             if (PositionalStatusCache.TryGetValue(dataId, out bool hasPositional))
-                return hasPositional;
+                return !hasPositional;
 
             bool result = !NonPositionalUnits.Contains(dataId);
-            if (result && bnpc.BattleNpcKind != Dalamud.Game.ClientState.Objects.Enums.BattleNpcSubKind.Enemy)
-                result = false;
-
             PositionalStatusCache[dataId] = result;
-            return result;
+            return !result;
         }
 
         public static bool HasTrueNorthEffect()

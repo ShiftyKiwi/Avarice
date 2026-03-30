@@ -1,3 +1,4 @@
+#nullable enable
 using Dalamud.Game.ClientState.JobGauge.Types;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -29,7 +30,7 @@ namespace Avarice.Data
 
 		internal T GetJobGauge<T>() where T : JobGaugeBase
 		{
-			if (!jobGaugeCache.TryGetValue(typeof(T), out JobGaugeBase gauge))
+			if (!jobGaugeCache.TryGetValue(typeof(T), out JobGaugeBase? gauge))
 			{
 				gauge = jobGaugeCache[typeof(T)] = Svc.Gauges.Get<T>();
 			}
@@ -74,9 +75,9 @@ namespace Avarice.Data
 
 		internal unsafe CooldownData GetCooldown(uint actionID)
 		{
-			if (cooldownCache.TryGetValue(actionID, out CooldownData found))
+			if (cooldownCache.TryGetValue(actionID, out CooldownData? found))
 			{
-				return found!;
+				return found;
 			}
 
 			CooldownData data = new()

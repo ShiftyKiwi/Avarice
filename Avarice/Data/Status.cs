@@ -1,3 +1,4 @@
+#nullable enable
 using Dalamud.Game.ClientState.Objects.Types;
 
 namespace Avarice.Data

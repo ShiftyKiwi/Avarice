@@ -5,14 +5,26 @@ namespace Avarice.Drawing;
 internal static class PictomancyRenderer
 {
     private static PctDrawList _drawList;
+    private static DateTime _disabledUntilUtc;
+    private static DateTime _lastFailureLogUtc;
+    private static int _consecutiveFailures;
 
     public static bool IsDrawing => _drawList != null;
+    public static bool InFailureBackoff => DateTime.UtcNow < _disabledUntilUtc;
+    public static TimeSpan FailureBackoffRemaining => InFailureBackoff ? _disabledUntilUtc - DateTime.UtcNow : TimeSpan.Zero;
+    public static int ConsecutiveFailures => _consecutiveFailures;
 
     public static void BeginFrame()
     {
+        EndFrame();
+
         if (!P.config.UsePictomancyRenderer)
         {
-            _drawList = null;
+            return;
+        }
+
+        if (InFailureBackoff)
+        {
             return;
         }
 
@@ -24,10 +36,22 @@ internal static class PictomancyRenderer
                 clipNativeUI: P.config.PictomancyClipNativeUI
             );
             _drawList = PictoService.Draw(ImGui.GetWindowDrawList(), hints);
+            _consecutiveFailures = 0;
+            _disabledUntilUtc = DateTime.MinValue;
         }
         catch (Exception ex)
         {
-            PluginLog.Error($"Failed to get Pictomancy draw list: {ex.Message}");
+            _consecutiveFailures++;
+            var now = DateTime.UtcNow;
+            var backoff = TimeSpan.FromSeconds(Math.Min(30, Math.Max(2, _consecutiveFailures * 2)));
+            _disabledUntilUtc = now.Add(backoff);
+
+            if (now - _lastFailureLogUtc >= TimeSpan.FromSeconds(10))
+            {
+                PluginLog.Error($"Failed to get Pictomancy draw list: {ex.Message}. Falling back to standard rendering for {backoff.TotalSeconds:0}s.");
+                _lastFailureLogUtc = now;
+            }
+
             _drawList = null;
         }
     }

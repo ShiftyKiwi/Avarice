@@ -57,6 +57,7 @@ namespace Avarice
 
         public void Dispose()
         {
+            ActionEffect.ActionEffectEvent -= ReceiveActionEffectDetour;
         }
     }
 }
