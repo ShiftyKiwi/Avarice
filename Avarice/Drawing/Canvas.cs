@@ -33,52 +33,44 @@ internal unsafe class Canvas : Window
 
     public override bool DrawConditions()
     {
-        // Basic check - player exists
         if (Svc.Objects.LocalPlayer == null)
             return false;
 
-        // Hide during cutscenes
         if (Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent] || Svc.Condition[ConditionFlag.WatchingCutscene78])
             return false;
 
-        // Check if drawing is enabled in profile
         if (!P.currentProfile.DrawingEnabled)
             return false;
 
-        // Check for positional requirements if enabled
-        if (P.config.OnlyDrawIfPositional)
-        {
-            // Make sure we have a valid target with positional requirements
-            if (Svc.Targets.Target is IBattleNpc bnpc && bnpc.IsHostile())
-            {
-                if (bnpc.HasPositional())
-                    return true;
-                // KEY: Still draw if MaxMeleeIgnorePositionalCheck is enabled
-                if (P.currentProfile.EnableMaxMeleeRing && P.currentProfile.MaxMeleeIgnorePositionalCheck)
-                    return true;
-                return false;
-            }
-
-            // No valid target with positionals
-            return false;
-        }
-
-        // All conditions passed
-        return true;
-    }
-
-    private bool ShouldShowPositionalFeatures()
-    {
         if (!P.config.OnlyDrawIfPositional)
             return true;
-        if (Svc.Targets.Target is IBattleNpc bnpc && bnpc.IsHostile())
-        {
-            if (bnpc.StatusList.Any(x => x.StatusId == 3808))
-                return false;
-            return bnpc.HasPositional();
-        }
 
-        return false;
+        return ShouldDrawForTarget(Svc.Targets.Target)
+            || ShouldDrawForTarget(Svc.Targets.FocusTarget);
+    }
+
+    private static bool ShouldDrawForTarget(IGameObject target)
+    {
+        if (target is not IBattleNpc bnpc || !bnpc.IsHostile())
+            return false;
+
+        if (bnpc.HasPositional())
+            return true;
+
+        return P.currentProfile.EnableMaxMeleeRing && P.currentProfile.MaxMeleeIgnorePositionalCheck;
+    }
+
+    private static bool ShouldShowPositionalFeaturesForTarget(IGameObject target)
+    {
+        if (target is not IBattleNpc bnpc || !bnpc.IsHostile())
+            return false;
+
+        return !P.config.OnlyDrawIfPositional || bnpc.HasPositional();
+    }
+
+    private static bool ShouldDrawFocusTarget(IGameObject focusTarget, IGameObject target)
+    {
+        return focusTarget != null && focusTarget.Address != target?.Address;
     }
 
     private static bool IsInHousingZone()
@@ -119,14 +111,11 @@ internal unsafe class Canvas : Window
 
     public override void Draw()
     {
-        // Drawing is already checked in DrawConditions() so no need for early return here
-        var showPositionalFeatures = ShouldShowPositionalFeatures();
-
         PictomancyRenderer.BeginFrame();
 
         try
         {
-            DrawAllOverlays(showPositionalFeatures);
+            DrawAllOverlays();
         }
         finally
         {
@@ -134,8 +123,11 @@ internal unsafe class Canvas : Window
         }
     }
 
-    private void DrawAllOverlays(bool showPositionalFeatures)
+    private void DrawAllOverlays()
     {
+        var target = Svc.Targets.Target;
+        var focusTarget = Svc.Targets.FocusTarget;
+
         DrawTankMiddle();
         if (P.currentProfile.CompassEnable && IsConditionMatching(P.currentProfile.CompassCondition))
         {
@@ -183,37 +175,26 @@ internal unsafe class Canvas : Window
             }
         }
 
-        if (showPositionalFeatures && P.currentProfile.EnableCurrentPie && IsConditionMatching(P.currentProfile.CurrentPieSettings.DisplayCondition))
+        if (P.currentProfile.EnableCurrentPie && IsConditionMatching(P.currentProfile.CurrentPieSettings.DisplayCondition))
         {
-            {
-                if (Svc.Targets.Target is IBattleNpc bnpc && bnpc.IsHostile())
-                {
-                    DrawCurrentPos(bnpc);
-                }
-            }
-            {
-                if (Svc.Targets.FocusTarget is IBattleNpc bnpc && Svc.Targets.FocusTarget.Address != Svc.Targets.Target?.Address && bnpc.IsHostile())
-                {
-                    DrawCurrentPos(bnpc);
-                }
-            }
+            if (ShouldShowPositionalFeaturesForTarget(target) && target is IBattleNpc targetBnpc)
+                DrawCurrentPos(targetBnpc);
+
+            if (ShouldDrawFocusTarget(focusTarget, target)
+              && ShouldShowPositionalFeaturesForTarget(focusTarget)
+              && focusTarget is IBattleNpc focusBnpc)
+                DrawCurrentPos(focusBnpc);
         }
 
         if (P.currentProfile.EnableMaxMeleeRing && IsConditionMatching(P.currentProfile.MaxMeleeSettingsN.DisplayCondition))
         {
-            {
-                if (Svc.Targets.Target is IBattleNpc bnpc && bnpc.IsHostile())
-                {
-                    DrawMaxMeleeForTarget(bnpc);
-                }
-            }
-            {
-                if (Svc.Targets.FocusTarget is IBattleNpc bnpc
-                  && Svc.Targets.FocusTarget.Address != Svc.Targets.Target?.Address && bnpc.IsHostile())
-                {
-                    DrawMaxMeleeForTarget(bnpc);
-                }
-            }
+            if (ShouldDrawForTarget(target) && target is IBattleNpc targetBnpc)
+                DrawMaxMeleeForTarget(targetBnpc);
+
+            if (ShouldDrawFocusTarget(focusTarget, target)
+              && ShouldDrawForTarget(focusTarget)
+              && focusTarget is IBattleNpc focusBnpc)
+                DrawMaxMeleeForTarget(focusBnpc);
         }
 
         if (P.currentProfile.EnablePlayerRing && IsConditionMatching(P.currentProfile.PlayerRingSettings.DisplayCondition))
@@ -221,30 +202,25 @@ internal unsafe class Canvas : Window
             CircleXZ(Svc.Objects.LocalPlayer.Position, Svc.Objects.LocalPlayer.HitboxRadius, P.currentProfile.PlayerRingSettings);
         }
 
-        if (showPositionalFeatures && P.currentProfile.EnableFrontSegment && IsConditionMatching(P.currentProfile.FrontSegmentIndicator.DisplayCondition))
+        if (P.currentProfile.EnableFrontSegment && IsConditionMatching(P.currentProfile.FrontSegmentIndicator.DisplayCondition))
         {
-            DrawFrontalPosition(Svc.Targets.Target);
-            if (Svc.Targets.Target?.Address != Svc.Targets.FocusTarget?.Address)
-            {
-                DrawFrontalPosition(Svc.Targets.FocusTarget);
-            }
+            if (ShouldShowPositionalFeaturesForTarget(target))
+                DrawFrontalPosition(target);
+
+            if (ShouldDrawFocusTarget(focusTarget, target) && ShouldShowPositionalFeaturesForTarget(focusTarget))
+                DrawFrontalPosition(focusTarget);
         }
 
-        if (showPositionalFeatures && P.currentProfile.EnableAnticipatedPie && IsConditionMatching(P.currentProfile.AnticipatedPieSettings.DisplayCondition)
+        if (P.currentProfile.EnableAnticipatedPie && IsConditionMatching(P.currentProfile.AnticipatedPieSettings.DisplayCondition)
            && (!P.currentProfile.AnticipatedDisableTrueNorth || !Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId.EqualsAny(1250u))))
         {
-            {
-                if (Svc.Targets.Target is IBattleNpc bnpc && bnpc.IsHostile() && bnpc.HasPositional())
-                {
-                    DrawAnticipatedPos(bnpc);
-                }
-            }
-            {
-                if (Svc.Targets.FocusTarget is IBattleNpc bnpc && Svc.Targets.FocusTarget.Address != Svc.Targets.Target?.Address && bnpc.IsHostile() && bnpc.HasPositional())
-                {
-                    DrawAnticipatedPos(bnpc);
-                }
-            }
+            if (ShouldShowPositionalFeaturesForTarget(target) && target is IBattleNpc targetBnpc)
+                DrawAnticipatedPos(targetBnpc);
+
+            if (ShouldDrawFocusTarget(focusTarget, target)
+              && ShouldShowPositionalFeaturesForTarget(focusTarget)
+              && focusTarget is IBattleNpc focusBnpc)
+                DrawAnticipatedPos(focusBnpc);
         }
 
         if (P.currentProfile.EnablePlayerDot && IsConditionMatching(P.currentProfile.PlayerDotSettings.DisplayCondition))
