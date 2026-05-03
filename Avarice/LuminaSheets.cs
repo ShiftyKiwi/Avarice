@@ -56,7 +56,7 @@ namespace Avarice
                 return TargetPositionalInfo.None;
 
             var isHostile = bnpc.IsHostile();
-            var isEnemyKind = bnpc.BattleNpcKind == Dalamud.Game.ClientState.Objects.Enums.BattleNpcSubKind.Enemy;
+            var isEnemyKind = bnpc.BattleNpcKind == Dalamud.Game.ClientState.Objects.Enums.BattleNpcSubKind.Combatant;
             var hasNonPositionalStatus = bnpc.StatusList.Any(x => x.StatusId == 3808);
             var ignoreStatus = hasNonPositionalStatus && P.currentProfile.ShowPositionalWithoutCheckWhenNonPositionalBuffs;
             var dataMarksOmnidirectional = IsOmnidirectional(bnpc.BaseId);
