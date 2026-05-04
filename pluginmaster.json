@@ -1,25 +1,25 @@
 [
 {
-    "Author":  "кайт машина (Puni.sh)",
-    "Name":  "Avarice",
-    "InternalName":  "Avarice",
-    "AssemblyVersion":  "2.2.0.7",
-    "Description":  "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
-    "ApplicableVersion":  "any",
-    "RepoUrl":  "https://github.com/ShiftyKiwi/Avarice",
-    "Tags":  [
-                 "combat"
-             ],
-    "DalamudApiLevel":  15,
-    "LoadRequiredState":  0,
-    "LoadSync":  false,
-    "CanUnloadAsync":  false,
-    "LoadPriority":  0,
-    "IconUrl":  "https://raw.githubusercontent.com/ShiftyKiwi/Avarice/main/Assets/avarice_icon.png",
-    "Punchline":  "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
-    "AcceptsFeedback":  true,
-    "DownloadLinkInstall":  "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.7/latest.zip",
-    "DownloadLinkUpdate":  "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.7/latest.zip",
-    "Changelog":  "See GitHub release notes."
+  "Author": "кайт машина (Puni.sh)",
+  "Name": "Avarice",
+  "InternalName": "Avarice",
+  "AssemblyVersion": "2.2.0.7",
+  "Description": "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
+  "ApplicableVersion": "any",
+  "RepoUrl": "https://github.com/ShiftyKiwi/Avarice",
+  "Tags": [
+    "combat"
+  ],
+  "DalamudApiLevel": 15,
+  "LoadRequiredState": 0,
+  "LoadSync": false,
+  "CanUnloadAsync": false,
+  "LoadPriority": 0,
+  "IconUrl": "https://raw.githubusercontent.com/ShiftyKiwi/Avarice/main/Assets/avarice_icon.png",
+  "Punchline": "Positional feedback with pixel perfect rear/flank tracking, range indicators, and more.",
+  "AcceptsFeedback": true,
+  "DownloadLinkInstall": "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.7/latest.zip",
+  "DownloadLinkUpdate": "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.7/latest.zip",
+  "Changelog": "See GitHub release notes."
 }
 ]
