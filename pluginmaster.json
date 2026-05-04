@@ -20,7 +20,6 @@
     "AcceptsFeedback":  true,
     "DownloadLinkInstall":  "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.7/latest.zip",
     "DownloadLinkUpdate":  "https://github.com/ShiftyKiwi/Avarice/releases/download/v2.2.0.7/latest.zip",
-    "Changelog":  "Updated for FFXIV Patch 7.5 and Dalamud API15.",
-    "LastUpdate":  "1777847939"
+    "Changelog":  "See GitHub release notes."
 }
 ]
